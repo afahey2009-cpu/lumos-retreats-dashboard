@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumos Retreats — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;background:#f0f4f8;color:#2d3748;min-height:100vh}
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-logo{width:36px;height:36px;background:#16602d;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.header-title{font-size:18px;font-weight:700;color:#16602d;letter-spacing:-.3px}
+.header-sub{font-size:12px;color:#a0aec0;margin-top:1px}
+.header-meta{display:flex;align-items:center;gap:10px;font-size:13px;color:#718096;flex-wrap:wrap}
+.badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-amber{background:#fef3c7;color:#92400e}
+.nav{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.nav-tab{padding:14px 18px;font-size:14px;font-weight:500;color:#718096;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;user-select:none;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.nav-tab:hover{color:#16602d}
+.nav-tab.active{color:#16602d;border-bottom-color:#16602d}
+.main{max-width:1200px;margin:0 auto;padding:24px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.kpi-label{font-size:11px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.6px}
+.kpi-value{font-size:30px;font-weight:700;margin-top:6px;color:#2d3748}
+.kpi-value.green{color:#16a34a}
+.kpi-value.amber{color:#d97706}
+.kpi-sub{font-size:12px;color:#a0aec0;margin-top:4px}
+.section{margin-bottom:28px}
+.section-title{font-size:16px;font-weight:700;color:#2d3748;margin-bottom:12px}
+.reservation-list{display:flex;flex-direction:column;gap:10px}
+.res-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.res-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;text-align:center;min-width:64px}
+.res-info{flex:1;min-width:0}
+.res-guest{font-size:15px;font-weight:600;color:#2d3748}
+.res-details{font-size:13px;color:#718096;margin-top:2px}
+.res-prop-tag{font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;white-space:nowrap;flex-shrink:0}
+.chart-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:24px}
+.monthly-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.month-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.month-name{font-size:12px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px}
+.month-total{font-size:34px;font-weight:700;color:#16a34a;margin-top:6px}
+.month-count{font-size:13px;color:#a0aec0;margin-top:4px}
+.table-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:24px}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#718096;text-align:left;border-bottom:1px solid #e2e8f0}
+td{padding:10px 16px;font-size:13px;color:#4a5568;border-bottom:1px solid #f0f4f8}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+.amt{color:#16a34a;font-weight:600}
+.messages-grid{display:flex;flex-direction:column;gap:16px}
+.convo-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.convo-header{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid #f0f4f8;gap:12px;cursor:pointer;background:#fafcff;transition:background .15s}
+.convo-header:hover{background:#f0f7ff}
+.convo-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.convo-meta{flex:1;min-width:0}
+.convo-guest{font-size:15px;font-weight:600;color:#2d3748}
+.convo-sub{font-size:12px;color:#718096;margin-top:2px}
+.convo-right{text-align:right;flex-shrink:0}
+.convo-toggle{color:#a0aec0;font-size:20px;margin-left:8px;transition:transform .2s}
+.convo-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.convo-body.open{max-height:2000px}
+.convo-body.open + .convo-header .convo-toggle{transform:rotate(90deg)}
+.messages-list{padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:82%}
+.msg.host{align-self:flex-end;align-items:flex-end}
+.msg.guest{align-self:flex-start;align-items:flex-start}
+.msg-bubble{padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.55}
+.msg.host .msg-bubble{background:#16602d;color:#fff;border-bottom-right-radius:4px}
+.msg.guest .msg-bubble{background:#f0f4f8;color:#2d3748;border-bottom-left-radius:4px}
+.msg-time{font-size:11px;color:#a0aec0;padding:0 4px}
+.overnight{color:#7c3aed;font-weight:500}
+.src-tag{font-size:10px;opacity:.65;margin-left:4px}
+.property-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.property-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.prop-img{width:100%;height:185px;object-fit:cover;background:#e2e8f0}
+.prop-body{padding:16px}
+.prop-name{font-size:17px;font-weight:700;color:#2d3748}
+.prop-loc{font-size:13px;color:#718096;margin-top:2px}
+.prop-stats{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.stat-chip{background:#f0f4f8;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:500;color:#4a5568}
+.review-alert{margin-top:12px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;font-weight:600}
+.active-bookings-chip{margin-top:8px;background:#dcfce7;border-radius:8px;padding:4px 10px;display:inline-block;font-size:12px;font-weight:600;color:#15803d}
+.divider{height:1px;background:#e2e8f0;margin:20px 0}
+@media(max-width:768px){.main{padding:16px}.kpi-grid{grid-template-columns:1fr 1fr}.monthly-grid{grid-template-columns:1fr}.header-meta{display:none}.nav-tab{padding:12px 12px;font-size:13px}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">⭐</div>
+    <div>
+      <div class="header-title">Lumos Retreats</div>
+      <div class="header-sub">Portfolio Dashboard</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="badge badge-green">3 Properties</span>
+    <span class="badge badge-blue">4 Active Bookings</span>
+    <span class="badge badge-amber">14 Reviews Pending</span>
+    <span style="color:#a0aec0">Updated May 2, 2026 · 3:36 PM EST</span>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="nav-tab active" onclick="showTab('overview')">📊 Overview</div>
+  <div class="nav-tab" onclick="showTab('revenue')">💰 Revenue &amp; Payouts</div>
+  <div class="nav-tab" onclick="showTab('messages')">💬 Messages</div>
+  <div class="nav-tab" onclick="showTab('properties')">🏠 Properties</div>
+</nav>
+
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview" class="tab-content active">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Payouts (Mar–Apr)</div>
+        <div class="kpi-value green">$29,200</div>
+        <div class="kpi-sub">33 payouts · Airbnb</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active Bookings</div>
+        <div class="kpi-value">4</div>
+        <div class="kpi-sub">across 2 of 3 properties</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Payout / Booking</div>
+        <div class="kpi-value">$885</div>
+        <div class="kpi-sub">Mar–Apr 2026</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Reviews Awaiting Reply</div>
+        <div class="kpi-value amber">14</div>
+        <div class="kpi-sub">across all 3 properties</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Upcoming Check-ins</div>
+      <div class="reservation-list" id="upcoming-list"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Most Recent Payouts</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Amount</th><th>Platform ID</th><th>Account</th></tr></thead>
+          <tbody id="recent-payouts-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVENUE & PAYOUTS -->
+  <div id="tab-revenue" class="tab-content">
+    <div class="monthly-grid">
+      <div class="month-card">
+        <div class="month-name">March 2026</div>
+        <div class="month-total">$15,854.53</div>
+        <div class="month-count">21 payouts · $754 avg</div>
+      </div>
+      <div class="month-card">
+        <div class="month-name">April 2026</div>
+        <div class="month-total">$13,345.92</div>
+        <div class="month-count">12 payouts · $1,112 avg</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:16px">Daily Payouts — March &amp; April 2026</div>
+      <div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:#718096">
+        <span><span style="display:inline-block;width:12px;height:12px;background:#16602d;border-radius:3px;margin-right:5px;vertical-align:middle"></span>March</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#e6a817;border-radius:3px;margin-right:5px;vertical-align:middle"></span>April</span>
+      </div>
+      <canvas id="payoutsChart" style="max-height:280px"></canvas>
+    </div>
+    <div class="section-title">All 33 Payouts</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Date</th><th>Amount</th><th>Platform ID</th><th>Account</th></tr></thead>
+        <tbody id="all-payouts-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="tab-messages" class="tab-content">
+    <p style="font-size:13px;color:#718096;margin-bottom:16px">
+      All timestamps shown in <strong>Eastern Standard Time (EST)</strong>. <span class="overnight">🌙</span> marks messages received 10 PM – 7 AM EST.
+    </p>
+    <div class="messages-grid" id="messages-grid"></div>
+  </div>
+
+  <!-- PROPERTIES -->
+  <div id="tab-properties" class="tab-content">
+    <div class="property-grid" id="property-grid"></div>
+  </div>
+
+</main>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const PAYOUTS = [
+  {date:"2026-03-06",pid:"G-KR7KEUKZCBV4U",amt:55853},
+  {date:"2026-03-09",pid:"G-YIEHZGDHPXHFR",amt:75912},
+  {date:"2026-03-09",pid:"G-KEAU26XGWJPWP",amt:80711},
+  {date:"2026-03-10",pid:"G-2JKQSKJSS3L6U",amt:46377},
+  {date:"2026-03-12",pid:"G-33R473Y576C45",amt:20000},
+  {date:"2026-03-12",pid:"G-ZJOYJDYZRYRMD",amt:128873},
+  {date:"2026-03-13",pid:"G-TQTDWOPRUXAZI",amt:104576},
+  {date:"2026-03-16",pid:"G-XNVIEARGOKQSS",amt:107623},
+  {date:"2026-03-17",pid:"G-NN5FHESBGS4R6",amt:15000},
+  {date:"2026-03-17",pid:"G-IS6BZ272JSGL5",amt:123233},
+  {date:"2026-03-23",pid:"G-K4DFWUW2VKA7C",amt:48756},
+  {date:"2026-03-23",pid:"G-FPNDJWZ7JGGLE",amt:78230},
+  {date:"2026-03-23",pid:"G-JAAJAK65VQFOU",amt:66434},
+  {date:"2026-03-25",pid:"G-U5YHGN3KSJL45",amt:71571},
+  {date:"2026-03-25",pid:"G-DFRJ7BVG7S3J2",amt:46796},
+  {date:"2026-03-27",pid:"G-XJWQ2IZO3X342",amt:63729},
+  {date:"2026-03-27",pid:"G-K5VZZSF2D4SGV",amt:104508},
+  {date:"2026-03-27",pid:"G-CQ73SGBNSGUUK",amt:15000},
+  {date:"2026-03-30",pid:"G-E3BJSVIWEP4V7",amt:54330},
+  {date:"2026-03-30",pid:"G-3L6JI3M5G46TI",amt:267941},
+  {date:"2026-03-31",pid:"G-HCD223T52Y4ZK",amt:10000},
+  {date:"2026-04-06",pid:"G-ACEJ22FVECXT2",amt:137093},
+  {date:"2026-04-06",pid:"G-NTUWQFKAE3RAA",amt:287730},
+  {date:"2026-04-06",pid:"G-Z3UITUBYDOQWI",amt:55314},
+  {date:"2026-04-08",pid:"G-A3Q2JYJUZV2CI",amt:121696},
+  {date:"2026-04-10",pid:"G-7XCEXZS3PQOEC",amt:52542},
+  {date:"2026-04-13",pid:"G-H3ED466M6JUTG",amt:165852},
+  {date:"2026-04-17",pid:"G-HISFIMN6CYC67",amt:43000},
+  {date:"2026-04-17",pid:"G-4UENQOTDTMPLL",amt:115624},
+  {date:"2026-04-20",pid:"G-XOIRYUI3OTMJX",amt:109520},
+  {date:"2026-04-24",pid:"G-KKUFALAUOMAIK",amt:85102},
+  {date:"2026-04-24",pid:"G-G4FFFFIKD76NL",amt:103056},
+  {date:"2026-04-27",pid:"G-HSNAD2OXVVRFB",amt:58063}
+];
+
+const PROPERTIES = [
+  {
+    id:"27aa1104",name:"The Turquoise Tui",loc:"Panama City Beach, FL",type:"Family Cottage",
+    img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1084097714528690359/original/096e3af0-8db3-49b8-a179-03349d4fa580.png?aki_policy=large",
+    br:3,beds:5,ba:2,max:7,ci:"3:00 PM",co:"11:00 AM",
+    reviews:53,pending:4,rating:5.0,color:"#0ea5e9",activeBookings:3
+  },
+  {
+    id:"ec667421",name:"Hello Ranger",loc:"Gatlinburg, TN",type:"Mountain Cabin",
+    img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1507430872313162935/original/fbf5e657-ff27-46ff-967a-465ba111429e.png?aki_policy=large",
+    br:3,beds:3,ba:2.5,max:6,ci:"3:00 PM",co:"10:00 AM",
+    reviews:9,pending:5,rating:5.0,color:"#16a34a",activeBookings:1
+  },
+  {
+    id:"eaf7689f",name:"Midnight Laurel",loc:"Pigeon Forge, TN",type:"Log Cabin",
+    img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1508135021895537716/original/9cb0da27-383c-45a4-ad76-9ace9e4c841e.jpeg?aki_policy=large",
+    br:2,beds:3,ba:1,max:4,ci:"3:00 PM",co:"10:00 AM",
+    reviews:9,pending:5,rating:4.9,color:"#7c3aed",activeBookings:0
+  }
+];
+
+const RESERVATIONS = [
+  {
+    id:"7096ef8f",code:"HMZ998JYEQ",platform:"Airbnb",
+    propId:"27aa1104",propName:"The Turquoise Tui",propLoc:"Panama City Beach, FL",propColor:"#0ea5e9",
+    guest:"Morgan",guestLoc:"Grenada, MS",
+    checkin:"2026-05-04",checkout:"2026-05-08",nights:4,
+    adults:4,children:0,infants:0,pets:1,
+    msgs:[
+      {role:"guest",body:"Hi, my name is Morgan. We will be visiting from Mississippi with our friends from Louisiana. They are getting married in a couple of weeks and we want to surprise them with a beach trip.",t:"2026-03-30T01:36:45Z"},
+      {role:"host",body:"Hi Morgan, and thanks for your reservation!\n\nWe are delighted to confirm your vacation at The Turquoise Tui in Panama City Beach starting on Monday, May 4 for 4 nights with 4 people.\n\nThe beach is easy walking distance and is a little under 10 minutes away.\n\nI will contact you again a few days before your arrival to give you some additional instructions for a smooth check-in.\n\nI look forward to hosting you!\n\nThanks, Adrian",t:"2026-03-30T01:43:04Z",src:"automated"},
+      {role:"guest",body:"Thank you so much! We are looking forward to our stay. 😊",t:"2026-03-30T01:44:16Z"},
+      {role:"host",body:"Hi Morgan,\nWith your stay upcoming we wanted to send over your check-in instructions for The Turquoise Tui.\n\nAddress: 313 Lake Place, Panama City Beach, FL 32413\n\nCheck in anytime after 3 PM. Enter from the side door under the carport.\n\nDoor lock code: 9831\nWi-Fi: Turquoise_Tui / Tui_Guest\n\nIf you have any questions please don't hesitate to reach out!",t:"2026-05-02T20:01:00Z",src:"automated"}
+    ]
+  },
+  {
+    id:"28f00408",code:"HMYDKDDSJW",platform:"Airbnb",
+    propId:"ec667421",propName:"Hello Ranger",propLoc:"Gatlinburg, TN",propColor:"#16a34a",
+    guest:"Carla",guestLoc:"",
+    checkin:"2026-05-07",checkout:"2026-05-15",nights:8,
+    adults:2,children:0,infants:0,pets:0,
+    msgs:[
+      {role:"host",body:"Carla we're so excited to host you! 🎉\nIf you need anything leading up to your stay — restaurant recommendations, grocery delivery options, or local tips — just reach out. We're here to help make it a great trip.",t:"2026-02-18T00:59:33Z"}
+    ]
+  },
+  {
+    id:"b645d05c",code:"HMQHCMCYDE",platform:"Airbnb",
+    propId:"27aa1104",propName:"The Turquoise Tui",propLoc:"Panama City Beach, FL",propColor:"#0ea5e9",
+    guest:"Ainsley",guestLoc:"Baltimore, MD",
+    checkin:"2026-05-08",checkout:"2026-05-11",nights:3,
+    adults:3,children:1,infants:1,pets:0,
+    msgs:[
+      {role:"guest",body:"Hi!\nDo you have pack and play or crib? Thanks!",t:"2026-03-23T15:45:56Z"},
+      {role:"host",body:"Hi Ainsley, we don't have a pack and play or crib on site due to liability reasons. However, there's a great website called BabyQuip that offers rentals at very reasonable rates — typically starting around $8/day with local delivery.",t:"2026-03-23T15:52:47Z",src:"hospitable"},
+      {role:"host",body:"They'll even deliver it to the house for you, which makes arrival much easier with an infant.",t:"2026-03-23T15:54:20Z",src:"AI"},
+      {role:"guest",body:"Yes!!! We have used them — just figured I'd ask!!\n\nThanks so much for your prompt response!!!",t:"2026-03-23T16:00:53Z"},
+      {role:"host",body:"My pleasure, good to know you have had success using them. We're here if you have any other questions! Take care.",t:"2026-03-23T16:02:01Z"},
+      {role:"guest",body:"Awesome, thanks so much! Your place looks great for our weekend!",t:"2026-03-23T16:03:04Z"},
+      {role:"host",body:"Hi Ainsley, and thanks for your reservation!\n\nWe are delighted to confirm your vacation at The Turquoise Tui in Panama City Beach starting on Friday, May 8 for 3 nights with 5 people.\n\nI will contact you again a few days before your arrival.\n\nI look forward to hosting you!\n\nThanks, Adrian",t:"2026-03-23T16:45:06Z",src:"automated"},
+      {role:"guest",body:"Thank you!!!",t:"2026-03-23T16:51:38Z"},
+      {role:"guest",body:"Good Morning!\nWe are excited to come in a few weeks! I had a couple questions — I am having BabyQuip drop off a pack and play on check-in day between 2–4 PM. Is there a good spot for them to leave it?\n\nAlso, what beach gear do you have? We're flying in from out of town with two littles and bringing nothing. Do you have beach totes?",t:"2026-04-21T12:29:59Z"},
+      {role:"host",body:"Good morning, Ainsley!\n\nThanks for letting me know about the BabyQuip delivery. The little front area outside the front door will work perfectly.\n\nAs for beach gear — we've got you covered! We provide a wagon, chairs, an umbrella, and separate beach/pool towels. The wagon makes everything much easier with two littles in tow.\n\nFeel free to reach out with anything else!",t:"2026-04-21T12:42:32Z",src:"AI"},
+      {role:"host",body:"Quick clarification — the main entry is actually the side door under the carport, so that would be the best drop-off spot for BabyQuip. Thanks again, Ainsley!",t:"2026-04-21T15:26:41Z",src:"AI"},
+      {role:"guest",body:"Thanks so much! This is so helpful!",t:"2026-04-21T17:13:59Z"}
+    ]
+  },
+  {
+    id:"fd5b6934",code:"HMP4X82RRN",platform:"Airbnb",
+    propId:"27aa1104",propName:"The Turquoise Tui",propLoc:"Panama City Beach, FL",propColor:"#0ea5e9",
+    guest:"Kristen",guestLoc:"",
+    checkin:"2026-05-13",checkout:"2026-05-20",nights:7,
+    adults:2,children:2,infants:0,pets:1,
+    msgs:[
+      {role:"guest",body:"Hi Adrian, Our trip guests include my husband, two children, our golden retriever Hudson, and myself. We plan to check in as soon as possible on May 13th.",t:"2026-04-23T20:40:43Z"},
+      {role:"host",body:"Hi Kristen, and thanks for your reservation!\n\nWe are delighted to confirm your vacation at The Turquoise Tui in Panama City Beach starting on Wednesday, May 13 for 7 nights with 4 people.\n\nIf you need any additional information, please do not hesitate to ask. I will contact you again a few days before your arrival.\n\nI look forward to hosting you!\n\nThanks, Adrian",t:"2026-04-23T20:41:14Z",src:"automated"}
+    ]
+  }
+];
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmt(cents){return'$'+(cents/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+function daysUntil(ds){
+  const [ty,tm,td]='2026-05-02'.split('-').map(Number);
+  const [ry,rm,rd]=ds.split('-').map(Number);
+  return Math.round((new Date(ry,rm-1,rd)-new Date(ty,tm-1,td))/(864e5));
+}
+
+function dateRange(ci,co){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const a=new Date(ci+'T12:00:00'),b=new Date(co+'T12:00:00');
+  return months[a.getMonth()]+' '+a.getDate()+' – '+months[b.getMonth()]+' '+b.getDate();
+}
+
+function guestLine(r){
+  const p=[];
+  if(r.adults)p.push(r.adults+(r.adults>1?' adults':' adult'));
+  if(r.children)p.push(r.children+(r.children>1?' children':' child'));
+  if(r.infants)p.push(r.infants+(r.infants>1?' infants':' infant'));
+  if(r.pets)p.push('🐾 '+r.pets);
+  return p.join(' · ');
+}
+
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function toCT(utcStr){
+  const d=new Date(utcStr);
+  // EST = UTC-5 fixed (Eastern Standard Time, no DST adjustment)
+  return new Date(d.getTime()-5*3600000);
+}
+
+function fmtMsgTime(utcStr){
+  const ct=toCT(utcStr);
+  const h=ct.getUTCHours(),m=ct.getUTCMinutes().toString().padStart(2,'0');
+  const ampm=h>=12?'PM':'AM';
+  const h12=h%12||12;
+  const mon=MONTHS[ct.getUTCMonth()];
+  const day=ct.getUTCDate();
+  const overnight=h<7||h>=22;
+  return{display:`${mon} ${day}, ${h12}:${m} ${ampm} EST`,overnight};
+}
+
+function esc(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ── TAB NAV ───────────────────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(el=>{
+    if(el.getAttribute('onclick').includes("'"+name+"'"))el.classList.add('active');
+  });
+  if(name==='revenue')renderChart();
+}
+
+// ── OVERVIEW: UPCOMING ────────────────────────────────────────
+function renderUpcoming(){
+  const el=document.getElementById('upcoming-list');
+  const sorted=[...RESERVATIONS].sort((a,b)=>new Date(a.checkin)-new Date(b.checkin));
+  sorted.forEach(r=>{
+    const d=daysUntil(r.checkin);
+    let bc='#16602d',bg='#dcfce7',bt=d===0?'TODAY':'IN '+d+'D';
+    if(d===0){bc='#dc2626';bg='#fef2f2';}
+    else if(d<=3){bc='#d97706';bg='#fef3c7';}
+    const card=document.createElement('div');
+    card.className='res-card';
+    card.innerHTML=`
+      <div class="res-badge" style="background:${bg};color:${bc}">${bt}</div>
+      <div class="res-info">
+        <div class="res-guest">${r.guest}${r.guestLoc?` <span style="font-weight:400;color:#a0aec0;font-size:13px">· ${r.guestLoc}</span>`:''}</div>
+        <div class="res-details">${dateRange(r.checkin,r.checkout)} · ${r.nights}n · ${guestLine(r)} · ${r.code}</div>
+      </div>
+      <div class="res-prop-tag" style="background:${r.propColor}22;color:${r.propColor}">${r.propName}</div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+// ── OVERVIEW: RECENT PAYOUTS ──────────────────────────────────
+function renderRecentPayouts(){
+  const tb=document.getElementById('recent-payouts-body');
+  [...PAYOUTS].slice(-8).reverse().forEach(p=>{
+    const d=new Date(p.date+'T12:00:00');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</td><td class="amt">${fmt(p.amt)}</td><td style="font-size:12px;color:#a0aec0">${p.pid}</td><td style="font-size:12px;color:#a0aec0">Checking ···1816</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── REVENUE: ALL PAYOUTS ──────────────────────────────────────
+function renderAllPayouts(){
+  const tb=document.getElementById('all-payouts-body');
+  [...PAYOUTS].reverse().forEach((p,i)=>{
+    const d=new Date(p.date+'T12:00:00');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="color:#a0aec0">${PAYOUTS.length-i}</td><td>${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</td><td class="amt">${fmt(p.amt)}</td><td style="font-size:12px;color:#a0aec0">${p.pid}</td><td style="font-size:12px;color:#a0aec0">Checking ···1816</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── REVENUE: CHART ────────────────────────────────────────────
+let chartDone=false;
+function renderChart(){
+  if(chartDone)return;chartDone=true;
+  const byDate={};
+  PAYOUTS.forEach(p=>{byDate[p.date]=(byDate[p.date]||0)+p.amt;});
+  const labels=Object.keys(byDate).sort();
+  const vals=labels.map(k=>byDate[k]/100);
+  const colors=labels.map(k=>k.startsWith('2026-03')?'#16602d':'#e6a817');
+  new Chart(document.getElementById('payoutsChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:labels.map(k=>{const d=new Date(k+'T12:00:00');return MONTHS[d.getMonth()]+' '+d.getDate();}),
+      datasets:[{label:'Payout',data:vals,backgroundColor:colors,borderRadius:5,borderSkipped:false}]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toLocaleString('en-US',{minimumFractionDigits:2})}}},
+      scales:{
+        y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f4f8'}},
+        x:{grid:{display:false},ticks:{maxRotation:45,font:{size:11}}}
+      }
+    }
+  });
+}
+
+// ── MESSAGES ──────────────────────────────────────────────────
+function renderMessages(){
+  const grid=document.getElementById('messages-grid');
+  const sorted=[...RESERVATIONS].sort((a,b)=>{
+    const la=a.msgs[a.msgs.length-1].t,lb=b.msgs[b.msgs.length-1].t;
+    return new Date(lb)-new Date(la);
+  });
+  const avatarColors=['#16602d','#0ea5e9','#7c3aed','#d97706'];
+  sorted.forEach((r,i)=>{
+    const d=daysUntil(r.checkin);
+    let bc='#16602d',bg='#dcfce7',bt=d===0?'TODAY':'IN '+d+(d===1?' DAY':' DAYS');
+    if(d===0){bc='#dc2626';bg='#fef2f2';}else if(d<=3){bc='#d97706';bg='#fef3c7';}
+    const lastT=fmtMsgTime(r.msgs[r.msgs.length-1].t);
+    const card=document.createElement('div');
+    card.className='convo-card';
+    const bodyId='cb-'+r.id;
+    card.innerHTML=`
+      <div class="convo-header" onclick="toggleConvo('${bodyId}',this)">
+        <div class="convo-avatar" style="background:${avatarColors[i%4]}">${r.guest[0]}</div>
+        <div class="convo-meta">
+          <div class="convo-guest">${r.guest} <span style="font-weight:400;color:#a0aec0;font-size:12px">· ${r.code}</span></div>
+          <div class="convo-sub">${r.propName} · ${dateRange(r.checkin,r.checkout)} · ${r.nights}n · ${guestLine(r)}</div>
+        </div>
+        <div class="convo-right">
+          <div style="background:${bg};color:${bc};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:4px">${bt}</div>
+          <div style="font-size:11px;color:#a0aec0">${lastT.display}</div>
+        </div>
+        <div class="convo-toggle">›</div>
+      </div>
+      <div class="convo-body" id="${bodyId}">
+        <div class="messages-list">${buildMsgs(r.msgs)}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+    if(i===0)setTimeout(()=>document.getElementById(bodyId).classList.add('open'),80);
+  });
+}
+
+function buildMsgs(msgs){
+  return msgs.map(m=>{
+    const {display,overnight}=fmtMsgTime(m.t);
+    const timeHtml=overnight
+      ?`<span class="msg-time"><span class="overnight">🌙 ${display}</span></span>`
+      :`<span class="msg-time">${display}</span>`;
+    const srcTag=m.src?`<span class="src-tag">(${m.src==='automated'?'auto':m.src})</span>`:'';
+    return`<div class="msg ${m.role}"><div class="msg-bubble">${esc(m.body)}${m.role==='host'?srcTag:''}</div>${timeHtml}</div>`;
+  }).join('');
+}
+
+function toggleConvo(id,header){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+  const tog=header.querySelector('.convo-toggle');
+  if(tog)tog.style.transform=el.classList.contains('open')?'rotate(90deg)':'';
+}
+
+// ── PROPERTIES ────────────────────────────────────────────────
+function renderProperties(){
+  const grid=document.getElementById('property-grid');
+  PROPERTIES.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='property-card';
+    const activeChip=p.activeBookings>0
+      ?`<div class="active-bookings-chip">✅ ${p.activeBookings} active booking${p.activeBookings>1?'s':''}</div>`
+      :`<div style="margin-top:8px;display:inline-block;background:#f0f4f8;border-radius:8px;padding:4px 10px;font-size:12px;color:#a0aec0">No active bookings</div>`;
+    card.innerHTML=`
+      <img class="prop-img" src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'">
+      <div class="prop-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div>
+            <div class="prop-name">${p.name}</div>
+            <div class="prop-loc">📍 ${p.loc}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="color:#e6a817;font-size:14px;font-weight:700">⭐ ${p.rating.toFixed(1)}</div>
+            <div style="font-size:12px;color:#a0aec0">${p.reviews} reviews</div>
+          </div>
+        </div>
+        <div class="prop-stats">
+          <span class="stat-chip">🛏 ${p.br}BR / ${p.ba}BA</span>
+          <span class="stat-chip">👥 Up to ${p.max}</span>
+          <span class="stat-chip">${p.type}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+          <div style="font-size:12px;color:#718096">Check-in: <strong>${p.ci}</strong></div>
+          <div style="font-size:12px;color:#718096">Check-out: <strong>${p.co}</strong></div>
+        </div>
+        ${activeChip}
+        ${p.pending>0?`<div class="review-alert">⚠️ ${p.pending} review${p.pending>1?'s':''} awaiting response</div>`:''}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+renderUpcoming();
+renderRecentPayouts();
+renderAllPayouts();
+renderMessages();
+renderProperties();
+</script>
+</body>
+</html>
